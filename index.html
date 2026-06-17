@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Convertly ✦ Unit Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ========== DESIGN TOKENS ========== */
+:root {
+  --rose:    #d4607a;
+  --blush:   #f5c6d4;
+  --petal:   #fdf0f4;
+  --lilac:   #c9a9d9;
+  --lavender:#f0e8f8;
+  --mauve:   #7c3068;
+  --cream:   #fdf8fb;
+  --ink:     #3a1f33;
+  --soft:    #8c6080;
+  --border:  #eed5e4;
+  --white:   #ffffff;
+  --shadow:  rgba(180,100,140,0.10);
+  --ff-display: 'Playfair Display', serif;
+  --ff-body:    'DM Sans', sans-serif;
+  --ff-mono:    'DM Mono', monospace;
+  --radius: 18px;
+  --radius-sm: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--ff-body);background:var(--cream);color:var(--ink);}
+a{text-decoration:none;color:inherit;}
+
+/* ========== SCROLLBAR ========== */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--petal);}
+::-webkit-scrollbar-thumb{background:var(--blush);border-radius:10px;}
+
+/* ========== NAVBAR ========== */
+.navbar {
+  position:sticky;top:0;z-index:100;
+  background:rgba(253,248,251,0.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  display:flex;align-items:center;
+  height:64px;gap:0;
+}
+.nav-logo {
+  font-family:var(--ff-display);
+  font-size:1.5rem;font-style:italic;
+  color:var(--mauve);
+  margin-right:2rem;
+  white-space:nowrap;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.nav-logo span{color:var(--rose);}
+.nav-menu{display:flex;align-items:center;gap:0;flex:1;overflow:visible;}
+.nav-item{position:relative;}
+.nav-item > .nav-link {
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;height:64px;
+  font-size:0.82rem;font-weight:500;letter-spacing:0.3px;
+  color:var(--soft);cursor:pointer;
+  white-space:nowrap;
+  border-bottom:2.5px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+.nav-item > .nav-link, .nav-item.active > .nav-link,
+.nav-item.open > .nav-link {
+  color:var(--soft);border-bottom:2.5px solid transparent;
+}
+.nav-item.open > .nav-link, .nav-item.active > .nav-link{
+  color:var(--mauve);border-bottom-color:var(--rose);
+}
+.nav-item > .nav-link .arrow{font-size:9px;transition:transform .2s;}
+.nav-item.open > .nav-link .arrow{transform:rotate(180deg);}
+
+/* Dropdown */
+.dropdown {
+  display:none;position:absolute;top:64px;left:0;
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:0 0 var(--radius) var(--radius);
+  box-shadow:0 12px 40px var(--shadow);
+  min-width:220px;padding:8px 0;
+  z-index:500;
+}
+.nav-item.open .dropdown{display:block;}
+.dropdown-group{padding:6px 0;}
+.dropdown-label{
+  font-size:0.7rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;
+  color:var(--lilac);padding:4px 18px 2px;
+}
+.dropdown-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 18px;font-size:0.82rem;
+  color:var(--soft);cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.dropdown-item:hover{background:var(--petal);color:var(--mauve);}
+.dropdown-item .di-icon{font-size:14px;width:18px;text-align:center;}
+.dropdown-divider{height:1px;background:var(--border);margin:4px 0;}
+
+/* Calc button in nav */
+.nav-calc-btn{
+  margin-left:auto;flex-shrink:0;
+  width:38px;height:38px;border-radius:50%;
+  background:var(--lavender);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;
+  transition:background .2s,transform .1s;
+}
+.nav-calc-btn:hover{background:var(--blush);transform:scale(1.08);}
+
+/* ========== CALCULATOR POPUP ========== */
+.calc-overlay{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(60,20,50,0.18);z-index:300;
+  backdrop-filter:blur(4px);
+}
+.calc-overlay.open{display:flex;align-items:flex-start;justify-content:flex-end;padding:72px 2rem 0;}
+.calc-popup{
+  background:var(--white);
+  border:1.5px solid var(--border);
+  border-radius:24px;
+  padding:20px 16px 24px;
+  width:280px;
+  box-shadow:0 24px 60px rgba(120,40,90,0.2);
+  animation:popIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(0.9) translateY(-10px);}to{opacity:1;transform:none;}}
+.calc-header{text-align:center;font-family:var(--ff-display);font-size:1rem;color:var(--mauve);margin-bottom:12px;font-style:italic;}
+.calc-display{
+  background:var(--petal);border:1px solid var(--border);
+  border-radius:14px;padding:12px 14px 10px;
+  text-align:right;margin-bottom:12px;min-height:64px;
+}
+.calc-expr{font-size:11px;color:var(--soft);min-height:14px;font-family:var(--ff-mono);margin-bottom:4px;}
+.calc-val{font-size:30px;font-weight:500;color:var(--mauve);font-family:var(--ff-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.ckey{
+  height:52px;border-radius:12px;border:none;cursor:pointer;
+  font-size:16px;font-weight:500;font-family:var(--ff-body);
+  transition:transform .1s,opacity .1s;
+}
+.ckey:active{transform:scale(0.92);opacity:.8;}
+.ckey-num{background:var(--white);color:var(--ink);border:1px solid var(--border);}
+.ckey-num:hover{background:var(--petal);}
+.ckey-op{background:var(--blush);color:var(--mauve);border:1px solid var(--border);}
+.ckey-op:hover{background:#f0aed6;}
+.ckey-fn{background:var(--lavender);color:#6b2f7a;border:1px solid #ddb5ee;font-size:13px;}
+.ckey-fn:hover{background:#e2c0f0;}
+.ckey-eq{background:var(--rose);color:#fff;border:none;grid-column:span 2;}
+.ckey-eq:hover{background:#c04e68;}
+.ckey-del{background:#ffe0eb;color:#b03060;border:1px solid var(--blush);font-size:13px;}
+
+/* ========== HOME PAGE ========== */
+.hero{
+  min-height:420px;
+  background:linear-gradient(135deg,#fdf0f4 0%,#f0e8f8 50%,#fdf4f9 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:4rem 2rem 3rem;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(197,160,220,0.25),transparent 70%);
+}
+.hero::after{
+  content:'';position:absolute;bottom:-60px;left:-60px;
+  width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,96,122,0.12),transparent 70%);
+}
+.hero-tag{
+  display:inline-block;
+  background:var(--white);border:1px solid var(--border);
+  border-radius:40px;padding:5px 16px;
+  font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--rose);font-weight:500;margin-bottom:1.2rem;
+}
+.hero h1{
+  font-family:var(--ff-display);
+  font-size:clamp(2.2rem,5vw,3.6rem);
+  color:var(--mauve);line-height:1.15;margin-bottom:1rem;
+}
+.hero h1 em{color:var(--rose);}
+.hero p{font-size:1rem;color:var(--soft);max-width:520px;line-height:1.7;margin-bottom:2rem;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.hero-pill{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:40px;padding:7px 18px;
+  font-size:0.8rem;color:var(--soft);cursor:pointer;
+  transition:background .2s,color .2s,border-color .2s;
+}
+.hero-pill:hover{background:var(--rose);color:#fff;border-color:var(--rose);}
+
+/* Module cards on home */
+.modules-section{padding:3rem 2rem;max-width:1100px;margin:0 auto;}
+.section-title{
+  font-family:var(--ff-display);font-size:1.7rem;
+  color:var(--mauve);margin-bottom:0.3rem;
+}
+.section-sub{font-size:0.88rem;color:var(--soft);margin-bottom:1.8rem;}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+.module-card{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:24px;
+  cursor:pointer;
+  transition:transform .2s,box-shadow .2s,border-color .2s;
+}
+.module-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px var(--shadow);border-color:var(--blush);}
+.mc-icon{font-size:2rem;margin-bottom:12px;}
+.mc-num{font-size:0.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--rose);font-weight:500;margin-bottom:4px;}
+.mc-title{font-family:var(--ff-display);font-size:1.1rem;color:var(--mauve);margin-bottom:6px;}
+.mc-desc{font-size:0.8rem;color:var(--soft);line-height:1.6;}
+.mc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.mc-tag{background:var(--petal);border-radius:20px;padding:3px 10px;font-size:0.72rem;color:var(--rose);}
+
+/* ========== PAGE LAYOUT ========== */
+.page{display:none;min-height:calc(100vh - 64px);}
+.page.active{display:block;}
+
+/* Module page */
+.mod-hero{
+  background:linear-gradient(120deg,var(--petal),var(--lavender));
+  padding:3rem 2rem 2rem;
+  border-bottom:1px solid var(--border);
+}
+.mod-hero-inner{max-width:900px;margin:0 auto;}
+.breadcrumb{font-size:0.78rem;color:var(--soft);margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
+.breadcrumb span{cursor:pointer;}
+.breadcrumb span:hover{color:var(--rose);}
+.breadcrumb .sep{color:var(--border);}
+.mod-icon{font-size:2.4rem;margin-bottom:8px;}
+.mod-title{font-family:var(--ff-display);font-size:2rem;color:var(--mauve);margin-bottom:6px;}
+.mod-subtitle{font-size:0.9rem;color:var(--soft);}
+.submod-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;margin-top:1.8rem;
+}
+.submod-card{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:14px;padding:18px 16px;cursor:pointer;
+  transition:all .2s;text-align:center;
+}
+.submod-card:hover{background:var(--rose);border-color:var(--rose);}
+.submod-card:hover .sc-icon,.submod-card:hover .sc-title,.submod-card:hover .sc-count{color:#fff;}
+.sc-icon{font-size:1.5rem;margin-bottom:6px;color:var(--rose);}
+.sc-title{font-size:0.88rem;font-weight:500;color:var(--mauve);margin-bottom:2px;}
+.sc-count{font-size:0.72rem;color:var(--soft);}
+
+/* Submodule page */
+.conv-layout{max-width:860px;margin:0 auto;padding:2.5rem 2rem;}
+.conv-list{display:flex;flex-direction:column;gap:10px;margin-bottom:2rem;}
+.conv-option{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:14px;padding:14px 20px;cursor:pointer;
+  transition:all .2s;
+}
+.conv-option:hover{background:var(--petal);border-color:var(--blush);}
+.conv-option.selected{background:var(--rose);border-color:var(--rose);color:#fff;}
+.conv-option.selected .co-from,.conv-option.selected .co-arrow,.conv-option.selected .co-to{color:#fff;}
+.co-from,.co-to{font-size:0.9rem;font-weight:500;color:var(--mauve);}
+.co-arrow{color:var(--rose);font-size:1.1rem;margin:0 12px;}
+.co-badge{font-size:0.7rem;background:var(--lavender);color:var(--mauve);border-radius:20px;padding:2px 10px;}
+
+/* Converter widget */
+.converter-box{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 8px 30px var(--shadow);
+  margin-top:1rem;
+}
+.conv-box-header{
+  background:linear-gradient(90deg,var(--petal),var(--lavender));
+  padding:20px 24px 16px;border-bottom:1px solid var(--border);
+}
+.conv-box-title{font-family:var(--ff-display);font-size:1.2rem;color:var(--mauve);}
+.formula-pill{
+  display:inline-block;
+  background:var(--white);border:1px solid var(--border);
+  border-radius:40px;padding:6px 16px;
+  font-size:0.78rem;font-family:var(--ff-mono);color:var(--soft);
+  margin-top:10px;
+}
+.conv-box-body{padding:24px;}
+.conv-inputs{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:20px;}
+.conv-field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);margin-bottom:6px;font-weight:500;}
+.conv-field input{
+  width:100%;background:var(--petal);
+  border:1.5px solid var(--border);border-radius:12px;
+  padding:12px 14px;font-size:1.1rem;color:var(--ink);
+  font-family:var(--ff-mono);font-weight:500;outline:none;
+  transition:border-color .2s;
+}
+.conv-field input:focus{border-color:var(--rose);background:var(--white);}
+.swap-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--lavender);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;
+  transition:background .2s,transform .3s;
+  flex-shrink:0;margin-top:18px;
+}
+.swap-btn:hover{background:var(--blush);transform:rotate(180deg);}
+.result-bar{
+  background:linear-gradient(90deg,var(--petal),var(--lavender));
+  border-radius:12px;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;
+}
+.result-label{font-size:0.78rem;color:var(--soft);text-transform:uppercase;letter-spacing:0.8px;}
+.result-value{font-family:var(--ff-display);font-size:1.6rem;color:var(--mauve);font-style:italic;}
+.result-unit{font-size:0.88rem;color:var(--rose);margin-left:4px;font-style:normal;font-family:var(--ff-body);}
+.step-box{
+  margin-top:16px;background:var(--petal);border-radius:12px;
+  padding:14px 18px;border-left:3px solid var(--rose);
+}
+.step-box h4{font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--rose);margin-bottom:8px;}
+.step-box p{font-size:0.85rem;color:var(--soft);line-height:1.7;font-family:var(--ff-mono);}
+
+/* EMI specific */
+.emi-form{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.emi-field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);margin-bottom:6px;font-weight:500;}
+.emi-field input,.emi-field select{
+  width:100%;background:var(--petal);
+  border:1.5px solid var(--border);border-radius:12px;
+  padding:12px 14px;font-size:1rem;color:var(--ink);outline:none;
+  font-family:var(--ff-body);transition:border-color .2s;
+}
+.emi-field input:focus,.emi-field select:focus{border-color:var(--rose);background:var(--white);}
+.emi-results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px;}
+.emi-card{background:var(--petal);border-radius:14px;padding:16px;text-align:center;}
+.emi-card .ec-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);margin-bottom:4px;}
+.emi-card .ec-val{font-family:var(--ff-display);font-size:1.3rem;color:var(--mauve);font-style:italic;}
+.calc-btn{
+  width:100%;background:var(--rose);color:#fff;border:none;
+  border-radius:12px;padding:14px;font-size:1rem;font-weight:500;
+  cursor:pointer;margin-top:4px;transition:background .2s;font-family:var(--ff-body);
+}
+.calc-btn:hover{background:#c04e68;}
+
+/* ========== FOOTER ========== */
+.footer{
+  text-align:center;padding:2rem;font-size:0.78rem;color:var(--soft);
+  border-top:1px solid var(--border);margin-top:2rem;
+}
+
+/* ========== RESPONSIVE ========== */
+@media(max-width:768px){
+  .navbar{padding:0 1rem;}
+  .nav-logo{font-size:1.2rem;margin-right:1rem;}
+  .nav-item > .nav-link{padding:0 10px;font-size:0.75rem;}
+  .hero{padding:3rem 1.2rem 2rem;}
+  .modules-section{padding:2rem 1.2rem;}
+  .conv-inputs{grid-template-columns:1fr;gap:8px;}
+  .swap-btn{margin:0 auto;transform:rotate(90deg);}
+  .swap-btn:hover{transform:rotate(270deg);}
+  .emi-form{grid-template-columns:1fr;}
+  .emi-results{grid-template-columns:1fr;}
+  .calc-overlay{padding:70px 1rem 0;}
+  .calc-popup{width:100%;max-width:320px;}
+  .conv-layout{padding:1.5rem 1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo" onclick="showPage('home')">Conver<span>tly</span> ✦</div>
+  <div class="nav-menu">
+    <!-- Module 1 -->
+    <div class="nav-item">
+      <div class="nav-link">📐 Basic <span class="arrow">▾</span></div>
+      <div class="dropdown">
+        <div class="dropdown-group">
+          <div class="dropdown-label">Module 1</div>
+          <div class="dropdown-item" onclick="showSubmod('length')"><span class="di-icon">📏</span> Length</div>
+          <div class="dropdown-item" onclick="showSubmod('weight')"><span class="di-icon">⚖️</span> Weight / Mass</div>
+          <div class="dropdown-item" onclick="showSubmod('area')"><span class="di-icon">🔲</span> Area</div>
+          <div class="dropdown-item" onclick="showSubmod('volume')"><span class="di-icon">🧴</span> Volume</div>
+        </div>
+      </div>
+    </div>
+    <!-- Module 2 -->
+    <div class="nav-item">
+      <div class="nav-link">⏱️ Time & Motion <span class="arrow">▾</span></div>
+      <div class="dropdown">
+        <div class="dropdown-group">
+          <div class="dropdown-label">Module 2</div>
+          <div class="dropdown-item" onclick="showSubmod('time')"><span class="di-icon">🕐</span> Time</div>
+          <div class="dropdown-item" onclick="showSubmod('speed')"><span class="di-icon">🚀</span> Speed</div>
+        </div>
+      </div>
+    </div>
+    <!-- Module 3 -->
+    <div class="nav-item">
+      <div class="nav-link">🔬 Scientific <span class="arrow">▾</span></div>
+      <div class="dropdown">
+        <div class="dropdown-group">
+          <div class="dropdown-label">Module 3</div>
+          <div class="dropdown-item" onclick="showSubmod('temperature')"><span class="di-icon">🌡️</span> Temperature</div>
+          <div class="dropdown-item" onclick="showSubmod('data')"><span class="di-icon">💾</span> Data Storage</div>
+          <div class="dropdown-item" onclick="showSubmod('energy')"><span class="di-icon">⚡</span> Energy</div>
+          <div class="dropdown-item" onclick="showSubmod('power')"><span class="di-icon">🔋</span> Power</div>
+          <div class="dropdown-item" onclick="showSubmod('pressure')"><span class="di-icon">🌊</span> Pressure</div>
+        </div>
+      </div>
+    </div>
+    <!-- Module 4 -->
+    <div class="nav-item">
+      <div class="nav-link">💰 Financial <span class="arrow">▾</span></div>
+      <div class="dropdown">
+        <div class="dropdown-group">
+          <div class="dropdown-label">Module 4</div>
+          <div class="dropdown-item" onclick="showSubmod('currency')"><span class="di-icon">💱</span> Currency</div>
+          <div class="dropdown-item" onclick="showSubmod('emi')"><span class="di-icon">🏦</span> EMI Calculator</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Calculator button -->
+  <div class="nav-calc-btn" title="Calculator" onclick="toggleCalc()">🧮</div>
+</nav>
+
+<!-- CALCULATOR POPUP -->
+<div class="calc-overlay" id="calcOverlay" onclick="closeCalcIfOutside(event)">
+  <div class="calc-popup" id="calcPopup">
+    <div class="calc-header">✦ Calculator ✦</div>
+    <div class="calc-display">
+      <div class="calc-expr" id="cExpr"></div>
+      <div class="calc-val" id="cVal">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="ckey ckey-fn" data-a="ac">AC</button>
+      <button class="ckey ckey-fn" data-a="pm">+/−</button>
+      <button class="ckey ckey-fn" data-a="pct">%</button>
+      <button class="ckey ckey-op" data-a="op" data-v="÷">÷</button>
+      <button class="ckey ckey-num" data-a="n" data-v="7">7</button>
+      <button class="ckey ckey-num" data-a="n" data-v="8">8</button>
+      <button class="ckey ckey-num" data-a="n" data-v="9">9</button>
+      <button class="ckey ckey-op" data-a="op" data-v="×">×</button>
+      <button class="ckey ckey-num" data-a="n" data-v="4">4</button>
+      <button class="ckey ckey-num" data-a="n" data-v="5">5</button>
+      <button class="ckey ckey-num" data-a="n" data-v="6">6</button>
+      <button class="ckey ckey-op" data-a="op" data-v="−">−</button>
+      <button class="ckey ckey-num" data-a="n" data-v="1">1</button>
+      <button class="ckey ckey-num" data-a="n" data-v="2">2</button>
+      <button class="ckey ckey-num" data-a="n" data-v="3">3</button>
+      <button class="ckey ckey-op" data-a="op" data-v="+">+</button>
+      <button class="ckey ckey-num" data-a="n" data-v="0">0</button>
+      <button class="ckey ckey-num" data-a="dot">.</button>
+      <button class="ckey ckey-del" data-a="del">⌫</button>
+      <button class="ckey ckey-eq" data-a="eq">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGES =================== -->
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-tag">✦ All conversions in one place</div>
+    <h1>Convert <em>anything</em>,<br/>beautifully.</h1>
+    <p>From millimeters to miles, seconds to years, bytes to terabytes — Convertly makes every conversion feel effortless and lovely.</p>
+    <div class="hero-pills">
+      <div class="hero-pill" onclick="showSubmod('length')">📏 Length</div>
+      <div class="hero-pill" onclick="showSubmod('temperature')">🌡️ Temperature</div>
+      <div class="hero-pill" onclick="showSubmod('currency')">💱 Currency</div>
+      <div class="hero-pill" onclick="showSubmod('data')">💾 Data</div>
+      <div class="hero-pill" onclick="showSubmod('emi')">🏦 EMI</div>
+    </div>
+  </div>
+  <div class="modules-section">
+    <div class="section-title">Browse by Module</div>
+    <div class="section-sub">Tap a module to explore all conversion categories inside it.</div>
+    <div class="module-grid">
+      <div class="module-card" onclick="showPage('mod-basic')">
+        <div class="mc-icon">📐</div>
+        <div class="mc-num">Module 01</div>
+        <div class="mc-title">Basic Measurements</div>
+        <div class="mc-desc">Length, weight, area, and volume — the everyday essentials.</div>
+        <div class="mc-tags"><span class="mc-tag">Length</span><span class="mc-tag">Weight</span><span class="mc-tag">Area</span><span class="mc-tag">Volume</span></div>
+      </div>
+      <div class="module-card" onclick="showPage('mod-time')">
+        <div class="mc-icon">⏱️</div>
+        <div class="mc-num">Module 02</div>
+        <div class="mc-title">Time & Motion</div>
+        <div class="mc-desc">Convert time intervals and speed across every unit you need.</div>
+        <div class="mc-tags"><span class="mc-tag">Time</span><span class="mc-tag">Speed</span></div>
+      </div>
+      <div class="module-card" onclick="showPage('mod-science')">
+        <div class="mc-icon">🔬</div>
+        <div class="mc-num">Module 03</div>
+        <div class="mc-title">Scientific</div>
+        <div class="mc-desc">Temperature, data, energy, power, and pressure conversions.</div>
+        <div class="mc-tags"><span class="mc-tag">Temp</span><span class="mc-tag">Data</span><span class="mc-tag">Energy</span><span class="mc-tag">Power</span><span class="mc-tag">Pressure</span></div>
+      </div>
+      <div class="module-card" onclick="showPage('mod-finance')">
+        <div class="mc-icon">💰</div>
+        <div class="mc-num">Module 04</div>
+        <div class="mc-title">Financial</div>
+        <div class="mc-desc">Live currency rates and a smart EMI calculator for loans.</div>
+        <div class="mc-tags"><span class="mc-tag">Currency</span><span class="mc-tag">EMI</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">Made with 💗 by Convertly · All conversions, one beautiful place.</div>
+</div>
+
+<!-- MOD BASIC -->
+<div class="page" id="page-mod-basic">
+  <div class="mod-hero">
+    <div class="mod-hero-inner">
+      <div class="breadcrumb"><span onclick="showPage('home')">Home</span><span class="sep">›</span><span>Module 01</span></div>
+      <div class="mod-icon">📐</div>
+      <div class="mod-title">Basic Measurements</div>
+      <div class="mod-subtitle">Choose a category to start converting</div>
+      <div class="submod-grid">
+        <div class="submod-card" onclick="showSubmod('length')"><div class="sc-icon">📏</div><div class="sc-title">Length</div><div class="sc-count">7 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('weight')"><div class="sc-icon">⚖️</div><div class="sc-title">Weight / Mass</div><div class="sc-count">5 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('area')"><div class="sc-icon">🔲</div><div class="sc-title">Area</div><div class="sc-count">4 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('volume')"><div class="sc-icon">🧴</div><div class="sc-title">Volume</div><div class="sc-count">4 conversions</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOD TIME -->
+<div class="page" id="page-mod-time">
+  <div class="mod-hero">
+    <div class="mod-hero-inner">
+      <div class="breadcrumb"><span onclick="showPage('home')">Home</span><span class="sep">›</span><span>Module 02</span></div>
+      <div class="mod-icon">⏱️</div>
+      <div class="mod-title">Time & Motion</div>
+      <div class="mod-subtitle">Choose a category to start converting</div>
+      <div class="submod-grid">
+        <div class="submod-card" onclick="showSubmod('time')"><div class="sc-icon">🕐</div><div class="sc-title">Time</div><div class="sc-count">7 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('speed')"><div class="sc-icon">🚀</div><div class="sc-title">Speed</div><div class="sc-count">4 conversions</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOD SCIENCE -->
+<div class="page" id="page-mod-science">
+  <div class="mod-hero">
+    <div class="mod-hero-inner">
+      <div class="breadcrumb"><span onclick="showPage('home')">Home</span><span class="sep">›</span><span>Module 03</span></div>
+      <div class="mod-icon">🔬</div>
+      <div class="mod-title">Scientific Conversions</div>
+      <div class="mod-subtitle">Choose a category to start converting</div>
+      <div class="submod-grid">
+        <div class="submod-card" onclick="showSubmod('temperature')"><div class="sc-icon">🌡️</div><div class="sc-title">Temperature</div><div class="sc-count">3 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('data')"><div class="sc-icon">💾</div><div class="sc-title">Data Storage</div><div class="sc-count">5 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('energy')"><div class="sc-icon">⚡</div><div class="sc-title">Energy</div><div class="sc-count">4 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('power')"><div class="sc-icon">🔋</div><div class="sc-title">Power</div><div class="sc-count">3 conversions</div></div>
+        <div class="submod-card" onclick="showSubmod('pressure')"><div class="sc-icon">🌊</div><div class="sc-title">Pressure</div><div class="sc-count">4 conversions</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOD FINANCE -->
+<div class="page" id="page-mod-finance">
+  <div class="mod-hero">
+    <div class="mod-hero-inner">
+      <div class="breadcrumb"><span onclick="showPage('home')">Home</span><span class="sep">›</span><span>Module 04</span></div>
+      <div class="mod-icon">💰</div>
+      <div class="mod-title">Financial Conversions</div>
+      <div class="mod-subtitle">Choose a category to start converting</div>
+      <div class="submod-grid">
+        <div class="submod-card" onclick="showSubmod('currency')"><div class="sc-icon">💱</div><div class="sc-title">Currency</div><div class="sc-count">6 pairs + custom</div></div>
+        <div class="submod-card" onclick="showSubmod('emi')"><div class="sc-icon">🏦</div><div class="sc-title">EMI Calculator</div><div class="sc-count">Loan planner</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMODULE / CONVERSION PAGE -->
+<div class="page" id="page-converter">
+  <div class="conv-layout">
+    <div class="breadcrumb" id="conv-breadcrumb"></div>
+    <h2 style="font-family:var(--ff-display);color:var(--mauve);margin-bottom:4px;" id="conv-page-title"></h2>
+    <p style="font-size:0.85rem;color:var(--soft);margin-bottom:1.6rem;" id="conv-page-sub"></p>
+    <div class="conv-list" id="conv-list"></div>
+    <div id="conv-widget"></div>
+  </div>
+</div>
+
+<script>
+// ===== CONVERSION DATA =====
+const SUBMODS = {
+  length:{
+    icon:'📏',title:'Length',module:'mod-basic',moduleLabel:'Basic Measurements',
+    desc:'Convert between metric and imperial length units.',
+    pairs:[
+      {from:'mm',to:'cm',label:'Millimeter → Centimeter',formula:'cm = mm ÷ 10',fn:v=>v/10,inv:v=>v*10},
+      {from:'cm',to:'m',label:'Centimeter → Meter',formula:'m = cm ÷ 100',fn:v=>v/100,inv:v=>v*100},
+      {from:'m',to:'km',label:'Meter → Kilometer',formula:'km = m ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'in',to:'cm',label:'Inch → Centimeter',formula:'cm = in × 2.54',fn:v=>v*2.54,inv:v=>v/2.54},
+      {from:'ft',to:'m',label:'Foot → Meter',formula:'m = ft × 0.3048',fn:v=>v*0.3048,inv:v=>v/0.3048},
+      {from:'yd',to:'m',label:'Yard → Meter',formula:'m = yd × 0.9144',fn:v=>v*0.9144,inv:v=>v/0.9144},
+      {from:'mi',to:'km',label:'Mile → Kilometer',formula:'km = mi × 1.60934',fn:v=>v*1.60934,inv:v=>v/1.60934},
+    ]
+  },
+  weight:{
+    icon:'⚖️',title:'Weight / Mass',module:'mod-basic',moduleLabel:'Basic Measurements',
+    desc:'Convert between milligrams, grams, kilograms, and imperial units.',
+    pairs:[
+      {from:'mg',to:'g',label:'Milligram → Gram',formula:'g = mg ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'g',to:'kg',label:'Gram → Kilogram',formula:'kg = g ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'kg',to:'t',label:'Kilogram → Metric Ton',formula:'t = kg ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'oz',to:'g',label:'Ounce → Gram',formula:'g = oz × 28.3495',fn:v=>v*28.3495,inv:v=>v/28.3495},
+      {from:'lb',to:'kg',label:'Pound → Kilogram',formula:'kg = lb × 0.453592',fn:v=>v*0.453592,inv:v=>v/0.453592},
+    ]
+  },
+  area:{
+    icon:'🔲',title:'Area',module:'mod-basic',moduleLabel:'Basic Measurements',
+    desc:'Convert between square metric and imperial area units.',
+    pairs:[
+      {from:'m²',to:'km²',label:'Sq. Meter → Sq. Kilometer',formula:'km² = m² ÷ 1,000,000',fn:v=>v/1e6,inv:v=>v*1e6},
+      {from:'m²',to:'ft²',label:'Sq. Meter → Sq. Foot',formula:'ft² = m² × 10.7639',fn:v=>v*10.7639,inv:v=>v/10.7639},
+      {from:'ft²',to:'in²',label:'Sq. Foot → Sq. Inch',formula:'in² = ft² × 144',fn:v=>v*144,inv:v=>v/144},
+      {from:'acre',to:'ha',label:'Acre → Hectare',formula:'ha = acre × 0.404686',fn:v=>v*0.404686,inv:v=>v/0.404686},
+    ]
+  },
+  volume:{
+    icon:'🧴',title:'Volume',module:'mod-basic',moduleLabel:'Basic Measurements',
+    desc:'Convert between milliliters, liters, gallons, and cubic units.',
+    pairs:[
+      {from:'mL',to:'L',label:'Milliliter → Liter',formula:'L = mL ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'L',to:'m³',label:'Liter → Cubic Meter',formula:'m³ = L ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'L',to:'gal',label:'Liter → Gallon (US)',formula:'gal = L × 0.264172',fn:v=>v*0.264172,inv:v=>v/0.264172},
+      {from:'L',to:'cc',label:'Liter → Cubic Centimeter',formula:'cc = L × 1000',fn:v=>v*1000,inv:v=>v/1000},
+    ]
+  },
+  time:{
+    icon:'🕐',title:'Time',module:'mod-time',moduleLabel:'Time & Motion',
+    desc:'Convert between all time units from milliseconds to years.',
+    pairs:[
+      {from:'ms',to:'s',label:'Millisecond → Second',formula:'s = ms ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'s',to:'min',label:'Second → Minute',formula:'min = s ÷ 60',fn:v=>v/60,inv:v=>v*60},
+      {from:'min',to:'hr',label:'Minute → Hour',formula:'hr = min ÷ 60',fn:v=>v/60,inv:v=>v*60},
+      {from:'hr',to:'day',label:'Hour → Day',formula:'day = hr ÷ 24',fn:v=>v/24,inv:v=>v*24},
+      {from:'day',to:'wk',label:'Day → Week',formula:'wk = day ÷ 7',fn:v=>v/7,inv:v=>v*7},
+      {from:'wk',to:'mo',label:'Week → Month',formula:'mo = wk ÷ 4.345',fn:v=>v/4.345,inv:v=>v*4.345},
+      {from:'mo',to:'yr',label:'Month → Year',formula:'yr = mo ÷ 12',fn:v=>v/12,inv:v=>v*12},
+    ]
+  },
+  speed:{
+    icon:'🚀',title:'Speed',module:'mod-time',moduleLabel:'Time & Motion',
+    desc:'Convert speed units across metric, imperial, and nautical.',
+    pairs:[
+      {from:'m/s',to:'km/h',label:'m/s → km/h',formula:'km/h = m/s × 3.6',fn:v=>v*3.6,inv:v=>v/3.6},
+      {from:'km/h',to:'mph',label:'km/h → mph',formula:'mph = km/h × 0.621371',fn:v=>v*0.621371,inv:v=>v/0.621371},
+      {from:'knot',to:'km/h',label:'Knot → km/h',formula:'km/h = knot × 1.852',fn:v=>v*1.852,inv:v=>v/1.852},
+      {from:'knot',to:'mph',label:'Knot → mph',formula:'mph = knot × 1.15078',fn:v=>v*1.15078,inv:v=>v/1.15078},
+    ]
+  },
+  temperature:{
+    icon:'🌡️',title:'Temperature',module:'mod-science',moduleLabel:'Scientific',
+    desc:'Convert between Celsius, Fahrenheit, and Kelvin.',
+    special:'temperature',
+    pairs:[
+      {from:'°C',to:'°F',label:'Celsius → Fahrenheit',formula:'°F = (°C × 9/5) + 32',fn:v=>(v*9/5)+32,inv:v=>(v-32)*5/9},
+      {from:'°C',to:'K',label:'Celsius → Kelvin',formula:'K = °C + 273.15',fn:v=>v+273.15,inv:v=>v-273.15},
+      {from:'°F',to:'K',label:'Fahrenheit → Kelvin',formula:'K = (°F − 32) × 5/9 + 273.15',fn:v=>(v-32)*5/9+273.15,inv:v=>(v-273.15)*9/5+32},
+    ]
+  },
+  data:{
+    icon:'💾',title:'Data Storage',module:'mod-science',moduleLabel:'Scientific',
+    desc:'Convert digital storage units from bits to terabytes.',
+    pairs:[
+      {from:'bit',to:'byte',label:'Bit → Byte',formula:'byte = bit ÷ 8',fn:v=>v/8,inv:v=>v*8},
+      {from:'B',to:'KB',label:'Byte → Kilobyte',formula:'KB = B ÷ 1024',fn:v=>v/1024,inv:v=>v*1024},
+      {from:'KB',to:'MB',label:'Kilobyte → Megabyte',formula:'MB = KB ÷ 1024',fn:v=>v/1024,inv:v=>v*1024},
+      {from:'MB',to:'GB',label:'Megabyte → Gigabyte',formula:'GB = MB ÷ 1024',fn:v=>v/1024,inv:v=>v*1024},
+      {from:'GB',to:'TB',label:'Gigabyte → Terabyte',formula:'TB = GB ÷ 1024',fn:v=>v/1024,inv:v=>v*1024},
+    ]
+  },
+  energy:{
+    icon:'⚡',title:'Energy',module:'mod-science',moduleLabel:'Scientific',
+    desc:'Convert between joules, calories, kilocalories, and kilowatt-hours.',
+    pairs:[
+      {from:'J',to:'kJ',label:'Joule → Kilojoule',formula:'kJ = J ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'J',to:'cal',label:'Joule → Calorie',formula:'cal = J ÷ 4.184',fn:v=>v/4.184,inv:v=>v*4.184},
+      {from:'kcal',to:'J',label:'Kilocalorie → Joule',formula:'J = kcal × 4184',fn:v=>v*4184,inv:v=>v/4184},
+      {from:'kWh',to:'J',label:'kWh → Joule',formula:'J = kWh × 3,600,000',fn:v=>v*3600000,inv:v=>v/3600000},
+    ]
+  },
+  power:{
+    icon:'🔋',title:'Power',module:'mod-science',moduleLabel:'Scientific',
+    desc:'Convert watts, kilowatts, megawatts, and horsepower.',
+    pairs:[
+      {from:'W',to:'kW',label:'Watt → Kilowatt',formula:'kW = W ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'kW',to:'MW',label:'Kilowatt → Megawatt',formula:'MW = kW ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'hp',to:'W',label:'Horsepower → Watt',formula:'W = hp × 745.7',fn:v=>v*745.7,inv:v=>v/745.7},
+    ]
+  },
+  pressure:{
+    icon:'🌊',title:'Pressure',module:'mod-science',moduleLabel:'Scientific',
+    desc:'Convert Pascal, kilopascal, bar, PSI, and atmosphere.',
+    pairs:[
+      {from:'Pa',to:'kPa',label:'Pascal → Kilopascal',formula:'kPa = Pa ÷ 1000',fn:v=>v/1000,inv:v=>v*1000},
+      {from:'Pa',to:'bar',label:'Pascal → Bar',formula:'bar = Pa ÷ 100,000',fn:v=>v/100000,inv:v=>v*100000},
+      {from:'Pa',to:'PSI',label:'Pascal → PSI',formula:'PSI = Pa ÷ 6894.76',fn:v=>v/6894.76,inv:v=>v*6894.76},
+      {from:'atm',to:'Pa',label:'Atmosphere → Pascal',formula:'Pa = atm × 101,325',fn:v=>v*101325,inv:v=>v/101325},
+    ]
+  },
+  currency:{
+    icon:'💱',title:'Currency',module:'mod-finance',moduleLabel:'Financial',
+    desc:'Live currency conversion with common and custom pairs.',
+    special:'currency'
+  },
+  emi:{
+    icon:'🏦',title:'EMI Calculator',module:'mod-finance',moduleLabel:'Financial',
+    desc:'Calculate monthly EMI, total interest, and total payment.',
+    special:'emi'
+  }
+};
+
+// ===== STATE =====
+let activeSubmod=null, activePairIdx=null, swapped=false;
+
+// ===== NAVIGATION =====
+function showPage(id){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function showSubmod(key){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open'));
+  activeSubmod=key; activePairIdx=null; swapped=false;
+  const sm=SUBMODS[key];
+  // breadcrumb
+  document.getElementById('conv-breadcrumb').innerHTML=
+    `<span onclick="showPage('home')">Home</span><span class="sep">›</span>
+     <span onclick="showPage('${sm.module}')">${sm.moduleLabel}</span>
+     <span class="sep">›</span><span>${sm.title}</span>`;
+  document.getElementById('conv-page-title').textContent=sm.icon+' '+sm.title;
+  document.getElementById('conv-page-sub').textContent=sm.desc;
+
+  // Build pair list
+  const list=document.getElementById('conv-list');
+  list.innerHTML='';
+  if(sm.special==='currency'){
+    renderCurrencyPage(); showPage('converter'); return;
+  }
+  if(sm.special==='emi'){
+    renderEMIPage(); showPage('converter'); return;
+  }
+  sm.pairs.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='conv-option';
+    el.innerHTML=`<div style="display:flex;align-items:center">
+      <span class="co-from">${p.from}</span>
+      <span class="co-arrow">⇄</span>
+      <span class="co-to">${p.to}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="co-badge">${p.label.split('→')[0].trim()} ↔ ${p.to}</span>
+    </div>`;
+    el.onclick=()=>selectPair(i);
+    list.appendChild(el);
+  });
+  document.getElementById('conv-widget').innerHTML='';
+  showPage('converter');
+}
+
+function selectPair(idx){
+  swapped=false;
+  activePairIdx=idx;
+  document.querySelectorAll('.conv-option').forEach((el,i)=>{
+    el.classList.toggle('selected',i===idx);
+  });
+  renderConverter();
+}
+
+function renderConverter(){
+  const sm=SUBMODS[activeSubmod];
+  const p=sm.pairs[activePairIdx];
+  const fromUnit=swapped?p.to:p.from;
+  const toUnit=swapped?p.from:p.to;
+  const formula=swapped?('(inverse) '+p.formula):p.formula;
+  const convFn=swapped?p.inv:p.fn;
+
+  document.getElementById('conv-widget').innerHTML=`
+    <div class="converter-box">
+      <div class="conv-box-header">
+        <div class="conv-box-title">${fromUnit} to ${toUnit}</div>
+        <div class="formula-pill">📐 Formula: ${formula}</div>
+      </div>
+      <div class="conv-box-body">
+        <div class="conv-inputs">
+          <div class="conv-field">
+            <label>${fromUnit}</label>
+            <input type="number" id="ci-from" placeholder="Enter value" oninput="doConvert()"/>
+          </div>
+          <div class="swap-btn" onclick="swapUnits()" title="Swap">⇄</div>
+          <div class="conv-field">
+            <label>${toUnit}</label>
+            <input type="number" id="ci-to" placeholder="Result" readonly style="background:var(--petal);cursor:default;"/>
+          </div>
+        </div>
+        <div class="result-bar">
+          <div><div class="result-label">Result</div><div id="res-text" style="font-size:0.85rem;color:var(--soft);">Enter a value above</div></div>
+          <div class="result-value" id="res-big">—</div>
+        </div>
+        <div class="step-box">
+          <h4>✦ How it works</h4>
+          <p id="step-text">Formula: ${formula}<br/>Enter a value on the left to see the calculation steps.</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+function doConvert(){
+  const sm=SUBMODS[activeSubmod];
+  const p=sm.pairs[activePairIdx];
+  const fromUnit=swapped?p.to:p.from;
+  const toUnit=swapped?p.from:p.to;
+  const convFn=swapped?p.inv:p.fn;
+  const formula=swapped?('(inverse) '+p.formula):p.formula;
+
+  const v=parseFloat(document.getElementById('ci-from').value);
+  if(isNaN(v)){
+    document.getElementById('ci-to').value='';
+    document.getElementById('res-big').textContent='—';
+    document.getElementById('res-text').textContent='Enter a value above';
+    document.getElementById('step-text').textContent='Formula: '+formula+'\nEnter a value on the left to see calculation steps.';
+    return;
+  }
+  const res=convFn(v);
+  const formatted=+res.toFixed(8);
+  document.getElementById('ci-to').value=formatted;
+  document.getElementById('res-big').textContent=formatted+' '+toUnit;
+  document.getElementById('res-text').textContent=v+' '+fromUnit+' equals';
+  document.getElementById('step-text').textContent=
+    `Formula: ${formula}\n→ Substituting: ${v} ${fromUnit}\n→ Result: ${formatted} ${toUnit}`;
+}
+
+function swapUnits(){
+  swapped=!swapped;
+  const fromVal=document.getElementById('ci-from')?.value;
+  renderConverter();
+  if(fromVal) { document.getElementById('ci-from').value=fromVal; doConvert(); }
+}
+
+// ===== CURRENCY PAGE =====
+const CURRENCY_PAIRS=[
+  {from:'INR',to:'USD',label:'INR → USD',rate:0.012,formula:'USD = INR × 0.012'},
+  {from:'INR',to:'EUR',label:'INR → EUR',rate:0.011,formula:'EUR = INR × 0.011'},
+  {from:'INR',to:'GBP',label:'INR → GBP',rate:0.0095,formula:'GBP = INR × 0.0095'},
+  {from:'USD',to:'EUR',label:'USD → EUR',rate:0.92,formula:'EUR = USD × 0.92'},
+  {from:'USD',to:'GBP',label:'USD → GBP',rate:0.79,formula:'GBP = USD × 0.79'},
+  {from:'USD',to:'INR',label:'USD → INR',rate:83.5,formula:'INR = USD × 83.5'},
+];
+const ALL_CURRENCIES=['INR','USD','EUR','GBP','JPY','CAD','AUD','CHF','CNY','SGD','AED'];
+// Rough rates relative to USD
+const RATES={INR:83.5,USD:1,EUR:0.92,GBP:0.79,JPY:149.5,CAD:1.36,AUD:1.52,CHF:0.89,CNY:7.23,SGD:1.34,AED:3.67};
+
+function renderCurrencyPage(){
+  document.getElementById('conv-list').innerHTML='';
+  document.getElementById('conv-widget').innerHTML=`
+  <div class="converter-box">
+    <div class="conv-box-header">
+      <div class="conv-box-title">💱 Currency Converter</div>
+      <div class="formula-pill">📐 Result = Amount × (To Rate ÷ From Rate)</div>
+    </div>
+    <div class="conv-box-body">
+      <p style="font-size:0.78rem;color:var(--soft);margin-bottom:14px;">⚠️ Rates shown are approximate. For live rates, connect to a real-time API.</p>
+      <!-- Preset pairs -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);font-weight:500;display:block;margin-bottom:8px;">Quick Pairs</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${CURRENCY_PAIRS.map((p,i)=>`<button onclick="selectCurrPair(${i})" id="cpair-${i}"
+            style="background:var(--petal);border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:0.8rem;color:var(--mauve);cursor:pointer;transition:all .2s;"
+            onmouseover="this.style.background='var(--rose)';this.style.color='#fff'"
+            onmouseout="if(!this.classList.contains('cpsel')){this.style.background='var(--petal)';this.style.color='var(--mauve)'}"
+            >${p.from} ⇄ ${p.to}</button>`).join('')}
+        </div>
+      </div>
+      <!-- Custom pair -->
+      <div style="background:var(--lavender);border-radius:14px;padding:16px;margin-bottom:16px;">
+        <label style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);font-weight:500;display:block;margin-bottom:10px;">✦ Custom Pair</label>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:10px;">
+          <select id="cc-from" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:0.9rem;color:var(--ink);outline:none;">
+            ${ALL_CURRENCIES.map(c=>`<option value="${c}">${c}</option>`).join('')}
+          </select>
+          <span style="color:var(--rose);font-size:1.2rem;">⇄</span>
+          <select id="cc-to" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:0.9rem;color:var(--ink);outline:none;">
+            ${ALL_CURRENCIES.map((c,i)=>`<option value="${c}" ${i===1?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <button onclick="applyCurrCustom()" style="width:100%;background:var(--rose);color:#fff;border:none;border-radius:10px;padding:10px;font-size:0.9rem;cursor:pointer;">Use This Pair</button>
+      </div>
+      <!-- Conversion -->
+      <div id="curr-conv-area" style="display:none;">
+        <div class="conv-inputs">
+          <div class="conv-field"><label id="clbl-from">FROM</label><input type="number" id="cc-amt" placeholder="Amount" oninput="doCurrConvert()"/></div>
+          <div style="display:flex;align-items:center;padding-top:18px;color:var(--rose);font-size:1.2rem;">⇄</div>
+          <div class="conv-field"><label id="clbl-to">TO</label><input type="number" id="cc-res" readonly style="background:var(--petal);cursor:default;"/></div>
+        </div>
+        <div class="result-bar">
+          <div><div class="result-label">Converted Amount</div><div id="curr-res-sub" style="font-size:0.85rem;color:var(--soft);">Enter amount above</div></div>
+          <div class="result-value" id="curr-res-big">—</div>
+        </div>
+        <div class="step-box"><h4>✦ Calculation</h4><p id="curr-step"></p></div>
+      </div>
+    </div>
+  </div>`;
+}
+let currFrom='INR',currTo='USD',currRate=0.012;
+function selectCurrPair(i){
+  document.querySelectorAll('[id^=cpair-]').forEach(b=>{b.classList.remove('cpsel');b.style.background='var(--petal)';b.style.color='var(--mauve)';});
+  const btn=document.getElementById('cpair-'+i);
+  btn.classList.add('cpsel');btn.style.background='var(--rose)';btn.style.color='#fff';
+  const p=CURRENCY_PAIRS[i];
+  currFrom=p.from;currTo=p.to;currRate=p.rate;
+  document.getElementById('clbl-from').textContent=currFrom;
+  document.getElementById('clbl-to').textContent=currTo;
+  document.getElementById('curr-conv-area').style.display='block';
+  document.getElementById('cc-amt').value='';
+  document.getElementById('cc-res').value='';
+  document.getElementById('curr-res-big').textContent='—';
+  document.getElementById('curr-res-sub').textContent='Enter amount above';
+  document.getElementById('curr-step').textContent=`Formula: ${p.formula}\nEnter an amount to see the result.`;
+}
+function applyCurrCustom(){
+  currFrom=document.getElementById('cc-from').value;
+  currTo=document.getElementById('cc-to').value;
+  currRate=RATES[currTo]/RATES[currFrom];
+  document.getElementById('clbl-from').textContent=currFrom;
+  document.getElementById('clbl-to').textContent=currTo;
+  document.getElementById('curr-conv-area').style.display='block';
+  document.getElementById('cc-amt').value='';
+  document.getElementById('cc-res').value='';
+  document.getElementById('curr-res-big').textContent='—';
+  document.getElementById('curr-step').textContent=`Formula: ${currTo} = ${currFrom} × ${currRate.toFixed(6)}\nEnter an amount to see the result.`;
+}
+function doCurrConvert(){
+  const v=parseFloat(document.getElementById('cc-amt').value);
+  if(isNaN(v)){document.getElementById('cc-res').value='';document.getElementById('curr-res-big').textContent='—';return;}
+  const res=(v*currRate).toFixed(4);
+  document.getElementById('cc-res').value=res;
+  document.getElementById('curr-res-big').textContent=res+' '+currTo;
+  document.getElementById('curr-res-sub').textContent=v+' '+currFrom+' equals';
+  document.getElementById('curr-step').textContent=
+    `Formula: ${currTo} = ${currFrom} × ${currRate.toFixed(6)}\n→ ${v} × ${currRate.toFixed(6)} = ${res} ${currTo}`;
+}
+
+// ===== EMI PAGE =====
+function renderEMIPage(){
+  document.getElementById('conv-list').innerHTML='';
+  document.getElementById('conv-widget').innerHTML=`
+  <div class="converter-box">
+    <div class="conv-box-header">
+      <div class="conv-box-title">🏦 EMI Calculator</div>
+      <div class="formula-pill">📐 EMI = P × r × (1+r)ⁿ / ((1+r)ⁿ − 1)</div>
+    </div>
+    <div class="conv-box-body">
+      <div class="step-box" style="margin-bottom:20px;">
+        <h4>✦ Formula Explained</h4>
+        <p>P = Principal Loan Amount · r = Monthly Interest Rate (Annual Rate ÷ 12 ÷ 100) · n = Loan Tenure in Months</p>
+      </div>
+      <div class="emi-form">
+        <div class="emi-field"><label>Loan Amount (₹)</label><input type="number" id="emi-p" placeholder="e.g. 500000" oninput="calcEMI()"/></div>
+        <div class="emi-field"><label>Annual Interest Rate (%)</label><input type="number" id="emi-r" placeholder="e.g. 8.5" step="0.1" oninput="calcEMI()"/></div>
+        <div class="emi-field"><label>Tenure</label><input type="number" id="emi-n" placeholder="e.g. 24" oninput="calcEMI()"/></div>
+        <div class="emi-field"><label>Tenure Unit</label>
+          <select id="emi-unit" onchange="calcEMI()">
+            <option value="months">Months</option>
+            <option value="years">Years</option>
+          </select>
+        </div>
+      </div>
+      <div class="emi-results" id="emi-results">
+        <div class="emi-card"><div class="ec-label">Monthly EMI</div><div class="ec-val" id="emi-monthly">—</div></div>
+        <div class="emi-card"><div class="ec-label">Total Interest</div><div class="ec-val" id="emi-interest">—</div></div>
+        <div class="emi-card"><div class="ec-label">Total Payment</div><div class="ec-val" id="emi-total">—</div></div>
+      </div>
+      <div class="step-box" style="margin-top:16px;"><h4>✦ Calculation Steps</h4><p id="emi-steps">Fill in the fields above to see the breakdown.</p></div>
+    </div>
+  </div>`;
+}
+function calcEMI(){
+  const P=parseFloat(document.getElementById('emi-p').value);
+  const annualR=parseFloat(document.getElementById('emi-r').value);
+  let n=parseFloat(document.getElementById('emi-n').value);
+  const unit=document.getElementById('emi-unit').value;
+  if(unit==='years') n=n*12;
+  if(isNaN(P)||isNaN(annualR)||isNaN(n)||n<=0){return;}
+  const r=annualR/12/100;
+  const emi=r===0?P/n:P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const totalPay=emi*n;
+  const totalInt=totalPay-P;
+  const fmt=v=>'₹ '+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  document.getElementById('emi-monthly').textContent=fmt(emi);
+  document.getElementById('emi-interest').textContent=fmt(totalInt);
+  document.getElementById('emi-total').textContent=fmt(totalPay);
+  document.getElementById('emi-steps').textContent=
+    `P = ${fmt(P)} · r = ${annualR}% ÷ 12 = ${(r*100).toFixed(4)}% per month · n = ${n} months\n`+
+    `EMI = ${fmt(P)} × ${r.toFixed(6)} × (1+${r.toFixed(6)})^${n} / ((1+${r.toFixed(6)})^${n} - 1)\n`+
+    `→ Monthly EMI = ${fmt(emi)}\n→ Total Interest = ${fmt(totalInt)}\n→ Total Payment = ${fmt(totalPay)}`;
+}
+
+// ===== DROPDOWN TOGGLE =====
+document.querySelectorAll('.nav-item > .nav-link').forEach(link=>{
+  link.addEventListener('click', e=>{
+    const item = link.parentElement;
+    const isOpen = item.classList.contains('open');
+    // close all
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open'));
+    if(!isOpen) item.classList.add('open');
+  });
+});
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.nav-item')){
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open'));
+  }
+});
+
+// ===== CALCULATOR =====
+let cCur='0',cPrev='',cOp='',cJustEq=false;
+function toggleCalc(){
+  const o=document.getElementById('calcOverlay');
+  o.classList.toggle('open');
+}
+function closeCalcIfOutside(e){
+  if(e.target===document.getElementById('calcOverlay')) toggleCalc();
+}
+function cUpdate(){
+  const d=document.getElementById('cVal');
+  d.textContent=cCur.length>12?parseFloat(cCur).toExponential(3):cCur;
+}
+function cCompute(){
+  let a=parseFloat(cPrev),b=parseFloat(cCur);
+  if(isNaN(a)||isNaN(b))return;
+  let r;
+  if(cOp==='÷')r=b!==0?a/b:'Error';
+  else if(cOp==='×')r=a*b;
+  else if(cOp==='−')r=a-b;
+  else if(cOp==='+')r=a+b;
+  cCur=r==='Error'?'Error':String(parseFloat(r.toFixed(10)));
+}
+document.querySelectorAll('.ckey').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const a=btn.dataset.a,v=btn.dataset.v;
+    if(a==='n'){
+      if(cCur==='0'||cJustEq){cCur=v;cJustEq=false;}
+      else if(cCur.length<12)cCur+=v;
+    }else if(a==='dot'){
+      if(cJustEq){cCur='0.';cJustEq=false;}
+      else if(!cCur.includes('.'))cCur+='.';
+    }else if(a==='op'){
+      if(cOp&&!cJustEq){cCompute();document.getElementById('cExpr').textContent='';}
+      cPrev=cCur;cOp=v;cJustEq=true;
+      document.getElementById('cExpr').textContent=cPrev+' '+cOp;
+    }else if(a==='eq'){
+      if(!cOp)return;
+      document.getElementById('cExpr').textContent=cPrev+' '+cOp+' '+cCur+' =';
+      cCompute();cOp='';cPrev='';cJustEq=true;
+    }else if(a==='ac'){
+      cCur='0';cPrev='';cOp='';cJustEq=false;
+      document.getElementById('cExpr').textContent='';
+    }else if(a==='pm'){
+      if(cCur!=='0')cCur=cCur.startsWith('-')?cCur.slice(1):'-'+cCur;
+    }else if(a==='pct'){
+      cCur=String(parseFloat(cCur)/100);
+    }else if(a==='del'){
+      if(cJustEq){cCur='0';return;}
+      cCur=cCur.length>1?cCur.slice(0,-1):'0';
+    }
+    cUpdate();
+  });
+});
+</script>
+</body>
+</html>
